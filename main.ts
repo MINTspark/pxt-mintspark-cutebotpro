@@ -5,24 +5,24 @@ namespace EasyCbp
     let backwardSteeringCorrection = 0;
     let distanceCorrection = 0;
 
-    enum DriveDirection {
+    export enum DriveDirection {
         //%block="forward"
         Forward = 1,
         //%block="reverse"
         Backward = 0
     }
 
-    enum DistanceUnits {
+    export enum DistanceUnits {
         //%block="cm"
         Cm = 0,
         //%block="inch"
         Inch = 1,
     }
 
-    //% group="Drive Controls"
-    //% weight=20
-    //% block="drive %direction %distance %distanceUnits at speed %speed"
-     //% speed.min=-100 speed.max=100
+    //% group="Drive"
+    //% block="drive %direction for %distance %distanceUnits speed %speed"
+    //% speed.min=0 speed.max=100
+    //% weight=200
     export function driveDistance(direction: DriveDirection, distance: number, distanceUnits: DistanceUnits, speed: number): void {
         if (distanceUnits == DistanceUnits.Cm)
             distance = distance;
@@ -31,7 +31,7 @@ namespace EasyCbp
 
         let steeringCorrection = forwardSteeringCorrection;
         let distCorrection = (100 + distanceCorrection) / 100;
-        let targetDegrees = (360 / 158.65) * distance * distCorrection;
+        let targetDegrees = (360 / 15.865) * distance * distCorrection;
 
         if (direction == DriveDirection.Backward)
         {
@@ -48,5 +48,18 @@ namespace EasyCbp
         }
 
         CutebotPro.stopImmediately(CutebotProMotors.ALL);
+    }
+
+    //% group="Drive"
+    //% block="set steering correction %direction to %correction \\%"
+    //% weight=180
+    export function setSteeringCorrection(direction: DriveDirection, correction: number): void{
+        if(direction = DriveDirection.Forward)
+        {
+            forwardSteeringCorrection = correction;
+        }
+        else{
+            backwardSteeringCorrection = correction;
+        }
     }
 }
