@@ -20,10 +20,17 @@ namespace EasyCbp
         Inch = 1,
     }
 
+    export enum TurnDirection {
+        //%block="turn left"
+        Left = 0,
+        //%block="turn right"
+        Right = 1
+    }
+
     //% group="Drive"
     //% block="drive %direction for %distance %distanceUnits speed %speed"
-    //% inlineInputMode=internal
-    //% speed.min=0 speed.max=100
+    //% inlineInputMode=inline
+    //% speed.min=20 speed.max=50
     //% weight=80
     export function driveDistance(direction: DriveDirection, distance: number, distanceUnits: DistanceUnits, speed: number): void {
         if (distanceUnits == DistanceUnits.Cm)
@@ -69,47 +76,33 @@ namespace EasyCbp
         }
     }
 
-    //% group=Turn"
+    //% group="Turn"
     //% weight=190
-    //% block="turn %CutebotProTurn for angle %CutebotProAngle"
-    export function trolleySteering(turn: CutebotProTurn, angle: number): void {
-        let buf = pins.createBuffer(7)
-        let curtime = 0
-        let oldtime = 0
-        let tempangle = 0
-        let orientation = 0
-        let cmd = 0
-        CutebotPro.pwmCruiseControl(0, 0)
-        basic.pause(1000)
-
-        tempangle = Math.map(angle, 0, 180, 0, 650);
-
-        if (turn == CutebotProTurn.Left) {
-            orientation = CutebotProWheel.RightWheel
-            cmd = 0x04
-        }
-        else if (turn == CutebotProTurn.Right) {
-            orientation = CutebotProWheel.LeftWheel
-            cmd = 0x04
-        }
-        else {
-            orientation = CutebotProWheel.AllWheel
-            cmd = 23
-            tempangle = tempangle + 4
-        }
-
+    //% block="turn %turn for angle %angle"
+    export function trolleySteering(turn: TurnDirection, angle: number): void {
+        let buf = pins.createBuffer(7);
+        let orientation = 0;
+        let cmd = 0;
+        let tempangle = Math.map(angle, 0, 180, 0, 650);
+        CutebotPro.pwmCruiseControl(0, 0);
+        basic.pause(500);
+        orientation = CutebotProWheel.AllWheel
+        cmd = 23
+        tempangle = tempangle + 4
+        
         buf[0] = 0x99;
         buf[1] = cmd;
         buf[2] = orientation;
         buf[3] = (tempangle >> 8) & 0xff;
         buf[4] = (tempangle >> 0) & 0xff;
-        if (turn == CutebotProTurn.RightInPlace)
+        if (turn == TurnDirection.Right)
             buf[5] = 0x00;
         else
             buf[5] = 0x01;
         buf[6] = 0x88;
         pins.i2cWriteBuffer(i2cAddr, buf)
-        basic.pause(1000)
+
+        basic.pause(500)
         while (1) {
             if (CutebotPro.readSpeed(CutebotProMotors1.M1, CutebotProSpeedUnits.Cms) == 0 && CutebotPro.readSpeed(CutebotProMotors1.M2, CutebotProSpeedUnits.Cms) == 0) {
                 basic.pause(1000)
@@ -118,6 +111,6 @@ namespace EasyCbp
             }
 
         }
-        basic.pause(1000)
+        basic.pause(500)
     }
 }
