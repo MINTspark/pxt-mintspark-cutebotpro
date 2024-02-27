@@ -21,16 +21,32 @@ namespace EasyCbp
     }
 
     export enum TurnDirection {
-        //%block="turn left"
+        //%block="left"
         Left = 0,
-        //%block="turn right"
+        //%block="right"
         Right = 1
+    }
+
+    //% group="Drive"
+    //% block="drive %direction with speed %speed"
+    //% inlineInputMode=inline
+    //% speed.min=20 speed.max=50 speed.defl=25
+    //% weight=90
+    export function driveSpeed(direction: DriveDirection, speed: number): void {
+        let steeringCorrection = forwardSteeringCorrection;
+
+        if (direction == DriveDirection.Backward) {
+            steeringCorrection = backwardSteeringCorrection;
+            speed = speed * -1;
+        }
+
+        CutebotPro.pwmCruiseControl(speed + steeringCorrection, speed);
     }
 
     //% group="Drive"
     //% block="drive %direction for %distance %distanceUnits speed %speed"
     //% inlineInputMode=inline
-    //% speed.min=20 speed.max=50
+    //% speed.min=20 speed.max=50 speed.defl=25 distanceUnits.defl=DistanceUnits.Cm
     //% weight=80
     export function driveDistance(direction: DriveDirection, distance: number, distanceUnits: DistanceUnits, speed: number): void {
         if (distanceUnits == DistanceUnits.Cm)
@@ -64,8 +80,16 @@ namespace EasyCbp
     }
 
     //% group="Drive"
+    //% block="stop drive"
+    //% inlineInputMode=inline
+    //% weight=85
+    export function stop(): void {
+        CutebotPro.stopImmediately(CutebotProMotors.ALL);
+    }
+
+    //% group="Drive"
     //% block="set steering correction %direction to %correction \\%"
-    //% weight=90
+    //% weight=20
     export function setSteeringCorrection(direction: DriveDirection, correction: number): void{
         if(direction == DriveDirection.Forward)
         {
@@ -112,5 +136,20 @@ namespace EasyCbp
 
         }
         basic.pause(500)
+    }
+
+    //% group="LED Headlights"
+    //% block="set LED Headlight %light color to $color"
+    //% color.shadow="colorNumberPicker"
+    //% weight=100
+    export function colorLight(light: CutebotProRGBLight, color: number) {
+        CutebotPro.colorLight(light, color);
+    }
+
+    //% group="LED Headlights"
+    //% block="turn off all LED headlights"
+    //% weight=90
+    export function turnOffAllHeadlights(): void {
+        CutebotPro.turnOffAllHeadlights();
     }
 }
