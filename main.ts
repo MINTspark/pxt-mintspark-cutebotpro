@@ -171,6 +171,14 @@ namespace EasyCbp
         neopixelStrip.show();
     }
 
+    //% group="Lights"
+    //% block="switch floor lights off"
+    //% weight=60
+    export function setAllFloorPixelOff(): void {
+        neopixelStrip.clear();
+        neopixelStrip.show();
+    }
+
     //% group="Sonar sensor"
     //% blockId=ultrasonic block="sonar sensor unit %SonarUnit"
     //% weight=220
