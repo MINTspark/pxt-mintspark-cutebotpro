@@ -5,6 +5,7 @@ namespace EasyCbp
     let forwardSteeringCorrection = 0;
     let backwardSteeringCorrection = 0;
     let distanceCorrection = 0;
+    let neopixelStrip = neopixel.create(DigitalPin.P15, 2, NeoPixelMode.RGB);
 
     export enum DriveDirection {
         //%block="forward"
@@ -138,7 +139,7 @@ namespace EasyCbp
         basic.pause(500)
     }
 
-    //% group="LED Headlights"
+    //% group="Lights"
     //% block="set LED Headlight %light color to $color"
     //% color.shadow="colorNumberPicker"
     //% weight=100
@@ -146,10 +147,34 @@ namespace EasyCbp
         CutebotPro.colorLight(light, color);
     }
 
-    //% group="LED Headlights"
+    //% group="Lights"
     //% block="turn off all LED headlights"
     //% weight=90
     export function turnOffAllHeadlights(): void {
         CutebotPro.turnOffAllHeadlights();
+    }
+
+    //% group="Lights"
+    //% block="set all floor lights to %rgb=neopixel_colors"
+    //% weight=80
+    export function setAllFloorPixelColor(rgb: number): void {
+        neopixelStrip.showColor(rgb);
+    }
+
+    //% group="Lights"
+    //% block="set floor light %position to %rgb=neopixel_colors"
+    //% weight=70
+    export function setFloorPixelColor(position: TurnDirection, rgb: number): void {
+        let pixelNumber = 0;
+        if (position == TurnDirection.Right) { pixelNumber = 1 }
+        neopixelStrip.setPixelColor(pixelNumber,rgb);
+        neopixelStrip.show();
+    }
+
+    //% group="Sonar sensor"
+    //% blockId=ultrasonic block="sonar sensor unit %SonarUnit"
+    //% weight=220
+    export function ultrasonic(unit: SonarUnit, maxCmDistance = 500): number {
+        return CutebotPro.ultrasonic(unit, maxCmDistance);
     }
 }
