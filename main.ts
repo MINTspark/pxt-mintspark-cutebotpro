@@ -180,6 +180,20 @@ namespace EasyCbp
         basic.pause(500)
     }
 
+    //% group="Claw"
+    //% block="open Claw"
+    //% weight=90
+    export function openClaw() {
+        CutebotPro.extendServoControl(ServoType.Servo360, CutebotProServoIndex.S1, 50)
+    }
+
+    //% group="Claw"
+    //% block="close Claw"
+    //% weight=100
+    export function closeClaw() {
+        CutebotPro.extendServoControl(ServoType.Servo360, CutebotProServoIndex.S1, 160)
+    }
+
     //% group="Lights"
     //% block="set LED Headlight %light color to $color"
     //% color.shadow="colorNumberPicker"
