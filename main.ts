@@ -28,6 +28,15 @@ namespace EasyCbp
         Right = 1
     }
 
+    export enum EasyAmount {
+        //%block="small"
+        Small = 0,
+        //%block="medium"
+        Medium = 1,
+        //%block="big"
+        Big = 1
+    }
+
     //% group="Drive"
     //% block="drive %direction with speed %speed"
     //% inlineInputMode=inline
@@ -99,6 +108,38 @@ namespace EasyCbp
         else{
             backwardSteeringCorrection = -correction;
         }
+    }
+
+    //% group="Drive"
+    //% block="drive %direction with speed %speed and turn %turnDirection with %amount turn"
+    //% inlineInputMode=inline
+    //% speed.min=20 speed.max=50 speed.defl=20
+    //% weight=87
+    export function driveCurve(direction: DriveDirection, speed: number, turnDirection: TurnDirection, amount: EasyAmount): void {
+        let turnAddition = 0;
+        let multiplier = 1;
+
+        switch(amount){
+            case EasyAmount.Small:
+                turnAddition = 1;
+                break;
+            case EasyAmount.Medium:
+                turnAddition = 2;
+                break;
+            case EasyAmount.Big:
+                turnAddition = 5;
+                break;
+        }
+  
+        if (direction == DriveDirection.Backward) {
+            speed = speed * -1;
+        }
+
+        if ((turnDirection == TurnDirection.Left && direction == DriveDirection.Forward) || (turnDirection == TurnDirection.Right && direction == DriveDirection.Backward)) {
+            turnAddition = -turnAddition;
+        }
+
+        CutebotPro.cruiseControl(speed + turnAddition, speed - turnAddition, CutebotProSpeedUnits.Cms);
     }
 
     //% group="Turn"
