@@ -37,6 +37,15 @@ namespace EasyCbp
         Big = 1
     }
 
+    export enum RGBHeadlight {
+        //%block="left headlight"
+        RGBL = 2,
+        //%block="right headlight"
+        RGBR = 1,
+        //%block="all headlights"
+        RGBA = 3
+    }
+
     //% group="Drive"
     //% block="drive %direction with speed %speed"
     //% inlineInputMode=inline
