@@ -10,7 +10,8 @@
     "files": [
         "main.blocks",
         "main.ts",
-        "README.md"
+        "README.md",
+        "_locales/de/pxt-easy-cbp-strings.json",
     ],
     "testFiles": [
         "test.ts"
