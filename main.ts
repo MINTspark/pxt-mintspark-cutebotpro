@@ -258,7 +258,7 @@ namespace EasyCbp
     }
 
     //% group="Sonar sensor"
-    //% blockId=ultrasonic block="sonar sensor unit %SonarUnit"
+    //% block="sonar sensor unit %SonarUnit"
     //% weight=220
     export function ultrasonic(unit: SonarUnit, maxCmDistance = 500): number {
         return CutebotPro.ultrasonic(unit, maxCmDistance);
