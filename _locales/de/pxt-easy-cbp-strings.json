@@ -1,0 +1,6 @@
+{
+  "EasyCbp.DriveDirection.Forward|block": "Vorwärts",
+  "EasyCbp.DriveDirection.Backward|block": "Zurück",
+  "EasyCbp.driveSpeed|block": "fahre %direction mit Geschwindigkeit %speed",
+  "{id:group}Drive": "Fahren"
+}
