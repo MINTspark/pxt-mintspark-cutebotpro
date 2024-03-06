@@ -207,8 +207,22 @@ namespace EasyCbp
     //% block="set LED Headlight %light color to $color"
     //% color.shadow="colorNumberPicker"
     //% weight=100
-    export function colorLight(light: CutebotProRGBLight, color: number) {
-        CutebotPro.colorLight(light, color);
+    export function colorLight(light: RGBHeadlight, color: number) {
+        let cbpLight;
+
+        switch (light) {
+            case RGBHeadlight.RGBL:
+                cbpLight = CutebotProRGBLight.RGBL;
+                break;
+            case RGBHeadlight.RGBR:
+                cbpLight = CutebotProRGBLight.RGBR;
+                break;
+            default:
+                cbpLight = CutebotProRGBLight.RGBA;
+                break;
+        }
+
+        CutebotPro.colorLight(cbpLight, color);
     }
 
     //% group="Lights"
