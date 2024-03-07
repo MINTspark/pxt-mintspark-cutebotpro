@@ -1,4 +1,4 @@
-//% weight=100 color=#008C8C block="Easy Cutebot Pro" blockId="Cutebot Pro" icon="\uf48b"
+//% weight=100 color=#008C8C block="MINTspark Cutebot" blockId="Cutebot Pro" icon="\uf48b"
 namespace EasyCbp
 {
     let i2cAddr: number = 0x10;
