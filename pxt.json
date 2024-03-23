@@ -11,7 +11,8 @@
         "main.blocks",
         "main.ts",
         "README.md",
-        "_locales/de/pxt-easy-cbp-strings.json"
+        "_locales/de/pxt-easy-cbp-strings.json",
+        "drivestraight.ts"
     ],
     "testFiles": [
         "test.ts"
