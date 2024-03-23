@@ -9,6 +9,8 @@ namespace DriveStraight {
     let MPU6050_ACCEL_CONFIG = 0x1C;
     let MPU6050_INT_PIN_CFG = 0x37;
     let MPU6050_INT_ENABLE = 0x38;
+    let MPU6050_INT_STATUS = 0x3A;
+    let MPU6050_ACCEL_XOUT_H = 0x3B;
 
     function readByte(reg: number): NumberFormat.UInt8BE
     {
@@ -16,9 +18,18 @@ namespace DriveStraight {
         return pins.i2cReadNumber(MPU6050_ADDRESS, NumberFormat.UInt8BE);
     }
 
+    function readBytes(reg: number, size: number): Buffer {
+        pins.i2cWriteNumber(MPU6050_ADDRESS, reg, NumberFormat.UInt8BE);
+        return pins.i2cReadBuffer(MPU6050_ADDRESS, size);
+    }
+
     function writeByte(reg: number, value: number) {
         pins.i2cWriteNumber(MPU6050_ADDRESS, reg, NumberFormat.UInt8BE);
         pins.i2cWriteNumber(MPU6050_ADDRESS, value, NumberFormat.UInt8BE);
+    }
+
+    function dataAvailable(): boolean {
+        return readByte(MPU6050_INT_STATUS) == 1;
     }
 
     function InitMPU6050(): boolean
@@ -84,5 +95,18 @@ namespace DriveStraight {
         writeByte(MPU6050_INT_ENABLE, 0x01);    // Enable data ready (bit 0) interrupt
         basic.pause(100);
         return true;
+    }
+
+
+
+
+    function UpdateMPU6050() {
+        if (!dataAvailable()) return;
+
+        let IMUCount: NumberFormat.UInt16BE[]; // used to read all 14 bytes at once from the MPU6050 accel/gyro
+        let rawData: NumberFormat.UInt8BE[];  // x/y/z accel register data stored here
+                                                
+        let buffer = readBytes(MPU6050_ACCEL_XOUT_H, 14);    // Read the 14 raw data registers into data array
+
     }
 }
