@@ -5,7 +5,9 @@
         "core": "*",
         "radio": "*",
         "microphone": "*",
-        "pxt-cutebotpro": "github:mpoelzl/pxt-Cutebot-Pro/"
+        "datalogger": "*",
+        "pxt-cutebotpro": "github:mpoelzl/pxt-Cutebot-Pro/",
+        "pxt-mintspark-mpu6050": "github:mpoelzl/pxt-mintspark-mpu6050#v1.0.1"
     },
     "files": [
         "main.blocks",
@@ -17,7 +19,7 @@
         "test.ts"
     ],
     "targetVersions": {
-        "target": "6.0.25",
+        "target": "6.0.28",
         "targetId": "microbit"
     },
     "supportedTargets": [

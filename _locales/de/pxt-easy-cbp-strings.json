@@ -13,6 +13,7 @@
     "EasyCbp.EasyAmount.Big|block": "groß",
     "EasyCbp.driveSpeed|block": "fahre %direction mit Geschwindigkeit %speed",
     "EasyCbp.driveDistance|block": "fahre %direction für %distance %distanceUnits mit Geschwindigkeit %speed",
+    "EasyCbp.driveDistanceGyro|block": "fahre mit Kreisel %direction für %distance %distanceUnits mit Geschwindigkeit %speed",
     "EasyCbp.stop|block": "Fahrt stoppen",
     "EasyCbp.setSteeringCorrection|block": "Lenkkorrektur %direction auf %correction \\% setzen (positive -> mehr rechts)",
     "EasyCbp.driveCurve|block": "fahre %direction mit Geschwindigkeit %speed und lenke %turnDirection mit Kurve %amount",
