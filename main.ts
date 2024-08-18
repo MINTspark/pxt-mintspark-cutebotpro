@@ -287,16 +287,16 @@ namespace EasyCbp
     }
 
     //% group="Turn"
-    //% block="gyro turn %turn for angle %angle"
+    //% block="gyro turn %turn for angle %angle speed %speed"
     //% inlineInputMode=inline
     //% weight=190
-    export function turnGyro(turn: TurnDirection, targetAngle: number): void {
-        let speed = 30;
+    export function turnGyro(turn: TurnDirection, angle: number, speed:number): void {
+
         let speedL = speed;
-        let speedR = -speed;
+        let speedR = -0;
 
         if (turn == TurnDirection.Left) {
-            speedL = -speed;
+            speedL = -0;
             speedR = speed;
         }
 
@@ -322,19 +322,33 @@ namespace EasyCbp
 
         while (input.runningTime() - startTime < 30000) {
             let heading = MINTsparkMpu6050.UpdateMPU6050().orientation.yaw;
+            let reciprocal = heading + 180;
+            if (reciprocal >= 360) reciprocal -= 360;
+
+            if (turn == TurnDirection.Right) {
+                if (heading < startHeading && heading < reciprocal)
+                {
+                    heading += 360;
+                } 
+
+                change = heading - startHeading;
+            }
+            else {
+                if (heading > startHeading && heading > reciprocal) {
+                    heading -= 360;
+                }
+
+                change = startHeading - heading;
+            }
+
+            
+            if (change > angle) break;
 
             datalogger.log(
                 datalogger.createCV("heading", heading),
-                datalogger.createCV("targetAngle", targetAngle)
+                datalogger.createCV("change", change)
             )
-            
-            if (turn == TurnDirection.Right)
-            {
-                if (heading > targetAngle && heading <= 270) break;
-            }
-            else{
-                if (heading < 360 - targetAngle && heading >= 90) break;
-            }
+
         }
 
         CutebotPro.stopImmediately(CutebotProMotors.ALL);
