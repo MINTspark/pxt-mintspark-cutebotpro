@@ -293,10 +293,10 @@ namespace EasyCbp
     export function turnGyro(turn: TurnDirection, angle: number, speed:number): void {
 
         let speedL = speed;
-        let speedR = -0;
+        let speedR = -speed;
 
         if (turn == TurnDirection.Left) {
-            speedL = -0;
+            speedL = -speed;
             speedR = speed;
         }
 
@@ -341,13 +341,13 @@ namespace EasyCbp
                 change = startHeading - heading;
             }
 
-            
             if (change > angle) break;
 
-            datalogger.log(
+            /*datalogger.log(
                 datalogger.createCV("heading", heading),
                 datalogger.createCV("change", change)
             )
+            */
 
         }
 
