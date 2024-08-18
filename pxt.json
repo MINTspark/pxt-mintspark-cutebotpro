@@ -7,7 +7,7 @@
         "microphone": "*",
         "datalogger": "*",
         "pxt-cutebotpro": "github:mpoelzl/pxt-Cutebot-Pro/",
-        "pxt-mintspark-mpu6050": "github:mpoelzl/pxt-mintspark-mpu6050#v1.0.1"
+        "pxt-mintspark-mpu6050": "github:mpoelzl/pxt-mintspark-mpu6050#v1.0.2"
     },
     "files": [
         "main.blocks",
