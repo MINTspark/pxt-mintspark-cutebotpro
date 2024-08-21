@@ -8,6 +8,9 @@ namespace EasyCbp
     let neopixelStrip = neopixel.create(DigitalPin.P15, 2, NeoPixelMode.RGB);
     let minSpeed = 15;
     let MPU6050Initialised = false;
+    let stopDrive = true;
+
+    CutebotPro.extendServoControl(ServoType.Servo180, CutebotProServoIndex.S1, 15)
 
     export enum DriveDirection {
         //%block="forward"
@@ -49,27 +52,12 @@ namespace EasyCbp
     }
 
     //% group="Drive"
-    //% block="drive %direction with speed %speed"
-    //% inlineInputMode=inline
-    //% speed.min=20 speed.max=50 speed.defl=25
-    //% weight=90
-    export function driveSpeed(direction: DriveDirection, speed: number): void {
-        let steeringCorrection = forwardSteeringCorrection;
-
-        if (direction == DriveDirection.Backward) {
-            steeringCorrection = backwardSteeringCorrection;
-            speed = speed * -1;
-        }
-
-        CutebotPro.pwmCruiseControl(speed + steeringCorrection, speed);
-    }
-
-    //% group="Drive"
-    //% block="drive %direction for %distance %distanceUnits speed %speed"
+    //% block="drive %direction with speed %speed\\% || for %distance %distanceUnits"
+    //% expandableArgumentMode="toggle"
     //% inlineInputMode=inline
     //% speed.min=20 speed.max=50 speed.defl=25 distanceUnits.defl=DistanceUnits.Cm
-    //% weight=80
-    export function driveDistance(direction: DriveDirection, distance: number, distanceUnits: DistanceUnits, speed: number): void {
+    //% weight=100
+    export function driveSpeedDistance(direction: DriveDirection, speed: number, distance?: number, distanceUnits?: DistanceUnits): void {
         if (distanceUnits == DistanceUnits.Cm)
             distance = distance;
         else if (distanceUnits == DistanceUnits.Inch)
@@ -86,26 +74,33 @@ namespace EasyCbp
             speed = speed * -1;
             modifier = -1;
         }
-       
-        CutebotPro.clearWheelTurn(CutebotProMotors1.M1);
-        CutebotPro.pwmCruiseControl(speed + steeringCorrection, speed);
 
-        let timeSum = 0;
-        while(CutebotPro.readDistance(CutebotProMotors1.M1) * modifier < targetDegrees && timeSum < 30000)
+        if (distance == null)
         {
-            basic.pause(100);
-            timeSum += 100;
+            CutebotPro.pwmCruiseControl(speed + steeringCorrection, speed);
         }
+        else
+        {
+            CutebotPro.clearWheelTurn(CutebotProMotors1.M1);
+            CutebotPro.pwmCruiseControl(speed + steeringCorrection, speed);
 
-        CutebotPro.stopImmediately(CutebotProMotors.ALL);
+            let timeSum = 0;
+            while (CutebotPro.readDistance(CutebotProMotors1.M1) * modifier < targetDegrees && timeSum < 30000) {
+                basic.pause(100);
+                timeSum += 100;
+            }
+
+            CutebotPro.stopImmediately(CutebotProMotors.ALL);
+        }
     }
 
     //% group="Drive"
-    //% block="Gyrodrive %direction for %distance %distanceUnits speed %speed"
+    //% block="gyro drive %direction with speed %speed\\% || for %distance %distanceUnits"
+    //% expandableArgumentMode="toggle"
     //% inlineInputMode=inline
     //% speed.min=20 speed.max=50 speed.defl=25 distanceUnits.defl=DistanceUnits.Cm
-    //% weight=27
-    export function driveDistanceGyro(direction: DriveDirection, distance: number, distanceUnits: DistanceUnits, speed: number): void {
+    //% weight=90
+    export function driveSpeedDistanceGyro(direction: DriveDirection, speed: number, distance?: number, distanceUnits?: DistanceUnits): void {
         if (speed < minSpeed) { speed = minSpeed; }
 
         if (distanceUnits == DistanceUnits.Cm)
@@ -114,8 +109,12 @@ namespace EasyCbp
             distance = distance * 2.54;
 
         let distCorrection = (100 + distanceCorrection) / 100;
-        let targetDegrees = (360 / 15.865) * distance * distCorrection;
+        let targetDegrees = 0;
         let modifier = 1;
+
+        if (distance != null) {
+            targetDegrees = (360 / 15.865) * distance * distCorrection;
+        }
 
         if (direction == DriveDirection.Backward) {
             speed = speed * -1;
@@ -145,8 +144,15 @@ namespace EasyCbp
         let errorSum = 0;
         let speedL = speed;
         let speedR = speed;
+        stopDrive = false;
 
-        while (CutebotPro.readDistance(CutebotProMotors1.M1) * modifier < targetDegrees && input.runningTime() - startTime < 30000) {
+        while (input.runningTime() - startTime < 30000) {
+            if (stopDrive) break;
+
+            if (distance != null && CutebotPro.readDistance(CutebotProMotors1.M1) * modifier > targetDegrees) {
+                break;
+            }
+
             let heading = MINTsparkMpu6050.UpdateMPU6050().orientation.yaw;
             let error = targetHeading - heading;
             if (error > 180) { error -= 360 };
@@ -188,18 +194,20 @@ namespace EasyCbp
             */
 
             // Change motor speed
+            if (stopDrive) break;
             CutebotPro.pwmCruiseControl(speedL, speedR);
         }
 
+        stopDrive = true;
         CutebotPro.stopImmediately(CutebotProMotors.ALL);
     }
-
 
     //% group="Drive"
     //% block="stop drive"
     //% inlineInputMode=inline
-    //% weight=85
+    //% weight=80
     export function stop(): void {
+        stopDrive = true;
         CutebotPro.stopImmediately(CutebotProMotors.ALL);
     }
 
@@ -216,42 +224,10 @@ namespace EasyCbp
         }
     }
 
-    //% group="Drive"
-    //% block="drive %direction with speed %speed and turn %turnDirection with %amount turn"
-    //% inlineInputMode=inline
-    //% speed.min=20 speed.max=50 speed.defl=20
-    //% weight=87
-    export function driveCurve(direction: DriveDirection, speed: number, turnDirection: TurnDirection, amount: EasyAmount): void {
-        let turnAddition = 0;
-        let multiplier = 1;
-
-        switch(amount){
-            case EasyAmount.Small:
-                turnAddition = 1;
-                break;
-            case EasyAmount.Medium:
-                turnAddition = 2;
-                break;
-            case EasyAmount.Big:
-                turnAddition = 5;
-                break;
-        }
-  
-        if (direction == DriveDirection.Backward) {
-            speed = speed * -1;
-        }
-
-        if ((turnDirection == TurnDirection.Left && direction == DriveDirection.Forward) || (turnDirection == TurnDirection.Right && direction == DriveDirection.Backward)) {
-            turnAddition = -turnAddition;
-        }
-
-        CutebotPro.cruiseControl(speed + turnAddition, speed - turnAddition, CutebotProSpeedUnits.Cms);
-    }
-
     //% group="Turn"
-    //% weight=190
+    //% weight=100
     //% block="turn %turn for angle %angle"
-    export function trolleySteering(turn: TurnDirection, angle: number): void {
+    export function turn (turn: TurnDirection, angle: number): void {
         let buf = pins.createBuffer(7);
         let orientation = 0;
         let cmd = 0;
@@ -289,8 +265,8 @@ namespace EasyCbp
     //% group="Turn"
     //% block="gyro turn %turn for angle %angle speed %speed"
     //% inlineInputMode=inline
-    //% weight=190
-    export function turnGyro(turn: TurnDirection, angle: number, speed:number): void {
+    //% weight=90
+    export function turnGyro(turn: TurnDirection, angle: number, speed: number): void {
 
         let speedL = speed;
         let speedR = -speed;
@@ -320,16 +296,15 @@ namespace EasyCbp
         CutebotPro.pwmCruiseControl(speedL, speedR);
         basic.pause(200);
 
-        while (input.runningTime() - startTime < 30000) {
+        while (input.runningTime() - startTime < 5000) {
             let heading = MINTsparkMpu6050.UpdateMPU6050().orientation.yaw;
             let reciprocal = heading + 180;
             if (reciprocal >= 360) reciprocal -= 360;
 
             if (turn == TurnDirection.Right) {
-                if (heading < startHeading && heading < reciprocal)
-                {
+                if (heading < startHeading && heading < reciprocal) {
                     heading += 360;
-                } 
+                }
 
                 change = heading - startHeading;
             }
@@ -348,24 +323,55 @@ namespace EasyCbp
                 datalogger.createCV("change", change)
             )
             */
-
         }
 
         CutebotPro.stopImmediately(CutebotProMotors.ALL);
+    }
+
+    //% group="Turn"
+    //% block="drive %direction with speed %speed and turn %turnDirection with %amount turn"
+    //% inlineInputMode=inline
+    //% speed.min=20 speed.max=50 speed.defl=20
+    //% weight=80
+    export function driveCurve(direction: DriveDirection, speed: number, turnDirection: TurnDirection, amount: EasyAmount): void {
+        let turnAddition = 0;
+        let multiplier = 1;
+
+        switch (amount) {
+            case EasyAmount.Small:
+                turnAddition = 1;
+                break;
+            case EasyAmount.Medium:
+                turnAddition = 2;
+                break;
+            case EasyAmount.Big:
+                turnAddition = 5;
+                break;
+        }
+
+        if (direction == DriveDirection.Backward) {
+            speed = speed * -1;
+        }
+
+        if ((turnDirection == TurnDirection.Left && direction == DriveDirection.Forward) || (turnDirection == TurnDirection.Right && direction == DriveDirection.Backward)) {
+            turnAddition = -turnAddition;
+        }
+
+        CutebotPro.cruiseControl(speed + turnAddition, speed - turnAddition, CutebotProSpeedUnits.Cms);
     }
 
     //% group="Claw"
     //% block="open Claw"
     //% weight=90
     export function openClaw() {
-        CutebotPro.extendServoControl(ServoType.Servo360, CutebotProServoIndex.S1, 50)
+        CutebotPro.extendServoControl(ServoType.Servo180, CutebotProServoIndex.S1, 15)
     }
 
     //% group="Claw"
     //% block="close Claw"
     //% weight=100
     export function closeClaw() {
-        CutebotPro.extendServoControl(ServoType.Servo360, CutebotProServoIndex.S1, 160)
+        CutebotPro.extendServoControl(ServoType.Servo180, CutebotProServoIndex.S1, 68)
     }
 
     //% group="Lights"
@@ -423,9 +429,26 @@ namespace EasyCbp
     }
 
     //% group="Sonar sensor"
-    //% block="sonar sensor unit %SonarUnit"
+    //% block="sonar sensor distance in %SonarUnit"
     //% weight=220
     export function ultrasonic(unit: SonarUnit, maxCmDistance = 500): number {
         return CutebotPro.ultrasonic(unit, maxCmDistance);
+    }
+
+    //% group="Linetracking sensor"
+    //% weight=260
+    //%block="line tracking sensor state is %TrackbitStateType"
+    export function getLinetrackingSensorState(state: TrackbitStateType): boolean {
+        let i2cBuffer = pins.createBuffer(7);
+        i2cBuffer[0] = 0x99;
+        i2cBuffer[1] = 0x12;
+        i2cBuffer[2] = 0x00;
+        i2cBuffer[3] = 0x00;
+        i2cBuffer[4] = 0x00;
+        i2cBuffer[5] = 0x00;
+        i2cBuffer[6] = 0x88;
+        pins.i2cWriteBuffer(i2cAddr, i2cBuffer)
+        let currentState = pins.i2cReadNumber(i2cAddr, NumberFormat.UInt8LE, false)
+        return currentState == state
     }
 }
