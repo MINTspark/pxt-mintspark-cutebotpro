@@ -6,10 +6,9 @@ namespace EasyCbp
     let backwardSteeringCorrection = 0;
     let distanceCorrection = 0;
     let neopixelStrip = neopixel.create(DigitalPin.P15, 2, NeoPixelMode.RGB);
-    let minSpeed = 15;
+    let minSpeed = 20;
     let MPU6050Initialised = false;
     let stopDrive = true;
-
     CutebotPro.extendServoControl(ServoType.Servo180, CutebotProServoIndex.S1, 15)
 
     export enum DriveDirection {
@@ -58,6 +57,7 @@ namespace EasyCbp
     //% speed.min=20 speed.max=50 speed.defl=25 distanceUnits.defl=DistanceUnits.Cm
     //% weight=100
     export function driveSpeedDistance(direction: DriveDirection, speed: number, distance?: number, distanceUnits?: DistanceUnits): void {
+        stopDrive = true;
         if (distanceUnits == DistanceUnits.Cm)
             distance = distance;
         else if (distanceUnits == DistanceUnits.Inch)
@@ -101,6 +101,7 @@ namespace EasyCbp
     //% speed.min=20 speed.max=50 speed.defl=25 distanceUnits.defl=DistanceUnits.Cm
     //% weight=90
     export function driveSpeedDistanceGyro(direction: DriveDirection, speed: number, distance?: number, distanceUnits?: DistanceUnits): void {
+        stopDrive = true;
         if (speed < minSpeed) { speed = minSpeed; }
 
         if (distanceUnits == DistanceUnits.Cm)
@@ -196,10 +197,21 @@ namespace EasyCbp
             // Change motor speed
             if (stopDrive) break;
             CutebotPro.pwmCruiseControl(speedL, speedR);
+            basic.pause(10);
         }
 
         stopDrive = true;
         CutebotPro.stopImmediately(CutebotProMotors.ALL);
+    }
+
+    //% group="Drive"
+    //% block="drive left motor speed %speedL and right motor speed %speedR
+    //% inlineInputMode=inline
+    //% speed.min=20 speed.max=50 speed.defl=20
+    //% weight=81
+    export function driveCurve(speedL: number, speedR: number): void {
+        stopDrive = true;
+        CutebotPro.pwmCruiseControl(speedL, speedR);
     }
 
     //% group="Drive"
@@ -228,6 +240,7 @@ namespace EasyCbp
     //% weight=100
     //% block="turn %turn for angle %angle"
     export function turn (turn: TurnDirection, angle: number): void {
+        stopDrive = true;
         let buf = pins.createBuffer(7);
         let orientation = 0;
         let cmd = 0;
@@ -263,10 +276,19 @@ namespace EasyCbp
     }
 
     //% group="Turn"
-    //% block="gyro turn %turn for angle %angle speed %speed"
+    //% block="gyro turn %turn for angle %angle\\% || with speed %speed"
+    //% expandableArgumentMode="toggle"
     //% inlineInputMode=inline
+    //% speed.min=20 speed.max=50 speed.defl=25 angle.min=1 angle.max=180 angle.defl=90
     //% weight=90
-    export function turnGyro(turn: TurnDirection, angle: number, speed: number): void {
+    export function turnGyro(turn: TurnDirection, angle: number, speed?: number): void {
+        stopDrive = true;
+        angle = angle * 0.95;
+
+        if (speed == null)
+        {
+            speed = 25;
+        }
 
         let speedL = speed;
         let speedR = -speed;
@@ -326,38 +348,6 @@ namespace EasyCbp
         }
 
         CutebotPro.stopImmediately(CutebotProMotors.ALL);
-    }
-
-    //% group="Turn"
-    //% block="drive %direction with speed %speed and turn %turnDirection with %amount turn"
-    //% inlineInputMode=inline
-    //% speed.min=20 speed.max=50 speed.defl=20
-    //% weight=80
-    export function driveCurve(direction: DriveDirection, speed: number, turnDirection: TurnDirection, amount: EasyAmount): void {
-        let turnAddition = 0;
-        let multiplier = 1;
-
-        switch (amount) {
-            case EasyAmount.Small:
-                turnAddition = 1;
-                break;
-            case EasyAmount.Medium:
-                turnAddition = 2;
-                break;
-            case EasyAmount.Big:
-                turnAddition = 5;
-                break;
-        }
-
-        if (direction == DriveDirection.Backward) {
-            speed = speed * -1;
-        }
-
-        if ((turnDirection == TurnDirection.Left && direction == DriveDirection.Forward) || (turnDirection == TurnDirection.Right && direction == DriveDirection.Backward)) {
-            turnAddition = -turnAddition;
-        }
-
-        CutebotPro.cruiseControl(speed + turnAddition, speed - turnAddition, CutebotProSpeedUnits.Cms);
     }
 
     //% group="Claw"
