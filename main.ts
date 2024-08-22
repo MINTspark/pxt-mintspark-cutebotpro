@@ -2,11 +2,11 @@
 namespace EasyCbp
 {
     let i2cAddr: number = 0x10;
-    let forwardSteeringCorrection = 0;
-    let backwardSteeringCorrection = 0;
+    let steeringCorrection = 0;
     let distanceCorrection = 0;
     let neopixelStrip = neopixel.create(DigitalPin.P15, 2, NeoPixelMode.RGB);
-    let minSpeed = 20;
+    let minSpeed = 25;
+    let maxSpeed = 65;
     let MPU6050Initialised = false;
     let stopDrive = true;
     CutebotPro.extendServoControl(ServoType.Servo180, CutebotProServoIndex.S1, 15)
@@ -50,39 +50,48 @@ namespace EasyCbp
         RGBA = 3
     }
 
+    export function restictSpeed(speed: number) : number{
+        if (speed > maxSpeed) return maxSpeed;
+        if (speed < minSpeed) return minSpeed;
+        return speed;
+    }
+
     //% group="Drive"
     //% block="drive %direction with speed %speed\\% || for %distance %distanceUnits"
     //% expandableArgumentMode="toggle"
     //% inlineInputMode=inline
-    //% speed.min=20 speed.max=50 speed.defl=25 distanceUnits.defl=DistanceUnits.Cm
+    //% speed.min=25 speed.max=50 speed.defl=30 distanceUnits.defl=DistanceUnits.Cm
     //% weight=100
     export function driveSpeedDistance(direction: DriveDirection, speed: number, distance?: number, distanceUnits?: DistanceUnits): void {
         stopDrive = true;
+        speed = restictSpeed(speed);
         if (distanceUnits == DistanceUnits.Cm)
             distance = distance;
         else if (distanceUnits == DistanceUnits.Inch)
             distance = distance * 2.54;
 
-        let steeringCorrection = forwardSteeringCorrection;
         let distCorrection = (100 + distanceCorrection) / 100;
         let targetDegrees = (360 / 15.865) * distance * distCorrection;
         let modifier = 1;
+        let steeringCorrectionHalf = speed * steeringCorrection / 2;
 
         if (direction == DriveDirection.Backward)
         {
-            steeringCorrection = backwardSteeringCorrection;
             speed = speed * -1;
             modifier = -1;
         }
 
+        let speedL = speed + steeringCorrectionHalf * modifier;
+        let speedR = speed - steeringCorrectionHalf * modifier;
+
         if (distance == null)
         {
-            CutebotPro.pwmCruiseControl(speed + steeringCorrection, speed);
+            CutebotPro.pwmCruiseControl(speed + steeringCorrectionHalf * modifier, speed - steeringCorrectionHalf * modifier);
         }
         else
         {
             CutebotPro.clearWheelTurn(CutebotProMotors1.M1);
-            CutebotPro.pwmCruiseControl(speed + steeringCorrection, speed);
+            CutebotPro.pwmCruiseControl(speed + steeringCorrectionHalf, speed - steeringCorrectionHalf);
 
             let timeSum = 0;
             while (CutebotPro.readDistance(CutebotProMotors1.M1) * modifier < targetDegrees && timeSum < 30000) {
@@ -98,11 +107,11 @@ namespace EasyCbp
     //% block="gyro drive %direction with speed %speed\\% || for %distance %distanceUnits"
     //% expandableArgumentMode="toggle"
     //% inlineInputMode=inline
-    //% speed.min=20 speed.max=50 speed.defl=25 distanceUnits.defl=DistanceUnits.Cm
+    //% speed.min=25 speed.max=50 speed.defl=30 distanceUnits.defl=DistanceUnits.Cm
     //% weight=90
     export function driveSpeedDistanceGyro(direction: DriveDirection, speed: number, distance?: number, distanceUnits?: DistanceUnits): void {
         stopDrive = true;
-        if (speed < minSpeed) { speed = minSpeed; }
+        speed = restictSpeed(speed);
 
         if (distanceUnits == DistanceUnits.Cm)
             distance = distance;
@@ -205,13 +214,21 @@ namespace EasyCbp
     }
 
     //% group="Drive"
-    //% block="drive left motor speed %speedL and right motor speed %speedR
+    //% block="drive left motor speed %speedL and right motor speed %speedR || for %seconds seconds"
     //% inlineInputMode=inline
-    //% speed.min=20 speed.max=50 speed.defl=20
+    //% speedL.min=25 speedL.max=50 speedL.defl=30 speedR.min=25 speedR.max=50 speedR.defl=30
     //% weight=81
-    export function driveCurve(speedL: number, speedR: number): void {
+    export function driveCurve(speedL: number, speedR: number, seconds?: number): void {
         stopDrive = true;
+        speedL = restictSpeed(speedL);
+        speedR = restictSpeed(speedR);
         CutebotPro.pwmCruiseControl(speedL, speedR);
+
+        if (seconds != null) {
+            basic.pause(seconds * 1000);
+            stopDrive = true;
+            CutebotPro.stopImmediately(CutebotProMotors.ALL);
+        }
     }
 
     //% group="Drive"
@@ -224,16 +241,10 @@ namespace EasyCbp
     }
 
     //% group="Drive"
-    //% block="set steering correction %direction to %correction \\%"
+    //% block="set steering correction to %correction \\%"
     //% weight=20
-    export function setSteeringCorrection(direction: DriveDirection, correction: number): void{
-        if(direction == DriveDirection.Forward)
-        {
-            forwardSteeringCorrection = correction;
-        }
-        else{
-            backwardSteeringCorrection = -correction;
-        }
+    export function setSteeringCorrection(correction: number): void{
+        steeringCorrection = correction / 100;
     }
 
     //% group="Turn"
@@ -279,7 +290,7 @@ namespace EasyCbp
     //% block="gyro turn %turn for angle %angle\\% || with speed %speed"
     //% expandableArgumentMode="toggle"
     //% inlineInputMode=inline
-    //% speed.min=20 speed.max=50 speed.defl=25 angle.min=1 angle.max=180 angle.defl=90
+    //% speedL.min=25 speedL.max=50 speedL.defl=25 angle.min=1 angle.max=180 angle.defl=90
     //% weight=90
     export function turnGyro(turn: TurnDirection, angle: number, speed?: number): void {
         stopDrive = true;
@@ -288,6 +299,10 @@ namespace EasyCbp
         if (speed == null)
         {
             speed = 25;
+        }
+        else
+        {
+            speed = restictSpeed(speed);
         }
 
         let speedL = speed;
