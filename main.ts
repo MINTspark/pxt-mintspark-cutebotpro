@@ -361,6 +361,8 @@ namespace EasyCbp
                 datalogger.createCV("change", change)
             )
             */
+
+            basic.pause(10);
         }
 
         CutebotPro.stopImmediately(CutebotProMotors.ALL);
