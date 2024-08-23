@@ -9,6 +9,7 @@ namespace EasyCbp
     let maxSpeed = 65;
     let MPU6050Initialised = false;
     let stopDrive = true;
+    let currentLineTrackingState = TrackbitStateType.Tracking_State_0;
     CutebotPro.extendServoControl(ServoType.Servo180, CutebotProServoIndex.S1, 15)
 
     export enum DriveDirection {
@@ -442,8 +443,8 @@ namespace EasyCbp
 
     //% group="Linetracking sensor"
     //% weight=260
-    //%block="line tracking sensor state is %TrackbitStateType"
-    export function getLinetrackingSensorState(state: TrackbitStateType): boolean {
+    //%block="read line tracking state from Sensor"
+    export function readLinetrackingSensorState(): void {
         let i2cBuffer = pins.createBuffer(7);
         i2cBuffer[0] = 0x99;
         i2cBuffer[1] = 0x12;
@@ -453,7 +454,13 @@ namespace EasyCbp
         i2cBuffer[5] = 0x00;
         i2cBuffer[6] = 0x88;
         pins.i2cWriteBuffer(i2cAddr, i2cBuffer)
-        let currentState = pins.i2cReadNumber(i2cAddr, NumberFormat.UInt8LE, false)
-        return currentState == state
+        currentLineTrackingState = pins.i2cReadNumber(i2cAddr, NumberFormat.UInt8LE, false);
+    }
+
+    //% group="Linetracking sensor"
+    //% weight=260
+    //%block="current line tracking sensor state is %TrackbitStateType"
+    export function linetrackingSensorIsState(state: TrackbitStateType): boolean {
+        return currentLineTrackingState == state
     }
 }
