@@ -113,19 +113,9 @@ namespace EasyCbp
     export function driveSpeedDistanceGyro(direction: DriveDirection, speed: number, distance?: number, distanceUnits?: DistanceUnits): void {
         stopDrive = true;
         speed = restictSpeed(speed);
-
-        if (distanceUnits == DistanceUnits.Cm)
-            distance = distance;
-        else if (distanceUnits == DistanceUnits.Inch)
-            distance = distance * 2.54;
-
         let distCorrection = (100 + distanceCorrection) / 100;
         let targetDegrees = 0;
         let modifier = 1;
-
-        if (distance != null) {
-            targetDegrees = (360 / 15.865) * distance * distCorrection;
-        }
 
         if (direction == DriveDirection.Backward) {
             speed = speed * -1;
@@ -147,71 +137,105 @@ namespace EasyCbp
 
         // PID Control
         let startTime = input.runningTime();
-        let Kp = 10;
-        let Ki = 0.1;
-        let Kd = 0.5;
         let targetHeading = MINTsparkMpu6050.UpdateMPU6050().orientation.yaw;
-        let lastError = 0;
-        let errorSum = 0;
-        let speedL = speed;
-        let speedR = speed;
+        let Kp = 10; let Ki = 0.1; let Kd = 0.5;
+        let lastError = 0;  let errorSum = 0; let speedL = speed; let speedR = speed;
         stopDrive = false;
 
-        while (input.runningTime() - startTime < 30000) {
-            if (stopDrive) break;
+        if (distance != null) {
+            if (distanceUnits == DistanceUnits.Cm)
+                distance = distance;
+            else if (distanceUnits == DistanceUnits.Inch)
+                distance = distance * 2.54;
+            targetDegrees = (360 / 15.865) * distance * distCorrection;
 
-            if (distance != null && CutebotPro.readDistance(CutebotProMotors1.M1) * modifier > targetDegrees) {
-                break;
+            while (input.runningTime() - startTime < 60000) {
+                if (stopDrive || CutebotPro.readDistance(CutebotProMotors1.M1) * modifier > targetDegrees) {
+                    break;
+                }
+
+                let heading = MINTsparkMpu6050.UpdateMPU6050().orientation.yaw;
+                let error = targetHeading - heading;
+                if (error > 180) { error -= 360 };
+                if (error < -180) { error += 360 };
+
+                let errorChange = error - lastError;
+                let deleteError = error;
+                let correction = Kp * error + Ki * errorSum + Kd * errorChange;
+
+                lastError = error;
+
+                if (error <= 10 && error >= -10) {
+                    errorSum += error;
+                }
+                else if (error > 10) {
+                    errorSum += 10;
+                }
+                else {
+                    errorSum -= 10;
+                }
+
+                speedL = speed + correction;
+                speedR = speed - correction;
+                if (speedL < 0) { speedL = 0 };
+                if (speedR < 0) { speedR = 0 };
+                if (speedL > 50) { speedL = 50 };
+                if (speedR > 50) { speedR = 50 };
+
+                // Change motor speed
+                if (stopDrive) break;
+                CutebotPro.pwmCruiseControl(speedL, speedR);
+                basic.pause(10);
             }
 
-            let heading = MINTsparkMpu6050.UpdateMPU6050().orientation.yaw;
-            let error = targetHeading - heading;
-            if (error > 180) { error -= 360 };
-            if (error < -180) { error += 360 };
-
-            let errorChange = error - lastError;
-            let deleteError = error;
-            let correction = Kp * error + Ki * errorSum + Kd * errorChange;
-
-            lastError = error;
-
-            if (error <= 10 && error >= -10) {
-                errorSum += error;
-            }
-            else if (error > 10) {
-                errorSum += 10;
-            }
-            else {
-                errorSum -= 10;
-            }
-
-            speedL = speed + correction;
-            speedR = speed - correction;
-            if (speedL < 0) { speedL = 0 };
-            if (speedR < 0) { speedR = 0 };
-            if (speedL > 50) { speedL = 50 };
-            if (speedR > 50) { speedR = 50 };
-
-            /*datalogger.log(
-                datalogger.createCV("heading", heading),
-                datalogger.createCV("error", error),
-                datalogger.createCV("errorSum", errorSum),
-                datalogger.createCV("errorChange", errorChange),
-                datalogger.createCV("correct", correction),
-                datalogger.createCV("sl", speedL),
-                datalogger.createCV("sr", speedR),
-                datalogger.createCV("sr", speedR)
-            )
-            */
-
-            // Change motor speed
-            if (stopDrive) break;
-            CutebotPro.pwmCruiseControl(speedL, speedR);
-            basic.pause(10);
+            stopDrive = true;
+            CutebotPro.stopImmediately(CutebotProMotors.ALL);
         }
+        else{
+            control.inBackground(() => {
+                while (input.runningTime() - startTime < 60000) {
+                    if (stopDrive) {
+                        break;
+                    }
 
-        stopDrive = true;
-        CutebotPro.stopImmediately(CutebotProMotors.ALL);
+                    let heading = MINTsparkMpu6050.UpdateMPU6050().orientation.yaw;
+                    let error = targetHeading - heading;
+                    if (error > 180) { error -= 360 };
+                    if (error < -180) { error += 360 };
+
+                    let errorChange = error - lastError;
+                    let deleteError = error;
+                    let correction = Kp * error + Ki * errorSum + Kd * errorChange;
+
+                    lastError = error;
+
+                    if (error <= 10 && error >= -10) {
+                        errorSum += error;
+                    }
+                    else if (error > 10) {
+                        errorSum += 10;
+                    }
+                    else {
+                        errorSum -= 10;
+                    }
+
+                    speedL = speed + correction;
+                    speedR = speed - correction;
+                    if (speedL < 0) { speedL = 0 };
+                    if (speedR < 0) { speedR = 0 };
+                    if (speedL > 50) { speedL = 50 };
+                    if (speedR > 50) { speedR = 50 };
+
+                    // Change motor speed
+                    if (stopDrive) break;
+                    CutebotPro.pwmCruiseControl(speedL, speedR);
+                    basic.pause(10);
+                }
+
+                stopDrive = true;
+                CutebotPro.stopImmediately(CutebotProMotors.ALL);
+            });
+        }
     }
 
     //% group="Drive"
