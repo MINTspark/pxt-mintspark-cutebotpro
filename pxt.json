@@ -14,7 +14,7 @@
         "main.blocks",
         "main.ts",
         "README.md",
-        "_locales/de/pxt-easy-cbp-strings.json"
+        "_locales/de/pxt-mintspark-cutebotpro-strings.json"
     ],
     "testFiles": [
         "test.ts"
