@@ -315,12 +315,11 @@ namespace EasyCbp
     //% block="gyro turn %turn for angle %angle\\% || with speed %speed"
     //% expandableArgumentMode="toggle"
     //% inlineInputMode=inline
-    //% speedL.min=25 speedL.max=50 speedL.defl=25 angle.min=1 angle.max=180 angle.defl=90
+    //% speedL.min=25 speedL.max=50 speedL.defl=25 angle.min=1 angle.max=200 angle.defl=90
     //% weight=90
     export function turnGyro(turn: TurnDirection, angle: number, speed?: number): void {
         stopDrive = true;
-        angle = angle * 0.95;
-
+        
         if (speed == null)
         {
             speed = 25;
