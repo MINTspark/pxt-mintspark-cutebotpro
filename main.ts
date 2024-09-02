@@ -51,7 +51,7 @@ namespace EasyCbp
         RGBA = 3
     }
 
-    export function restictSpeed(speed: number) : number{
+    export function restrictSpeed(speed: number) : number{
         if (speed > maxSpeed) return maxSpeed;
         if (speed < minSpeed) return minSpeed;
         return speed;
@@ -65,7 +65,7 @@ namespace EasyCbp
     //% weight=100
     export function driveSpeedDistance(direction: DriveDirection, speed: number, distance?: number, distanceUnits?: DistanceUnits): void {
         stopDrive = true;
-        speed = restictSpeed(speed);
+        speed = restrictSpeed(speed);
         if (distanceUnits == DistanceUnits.Cm)
             distance = distance;
         else if (distanceUnits == DistanceUnits.Inch)
@@ -112,7 +112,7 @@ namespace EasyCbp
     //% weight=90
     export function driveSpeedDistanceGyro(direction: DriveDirection, speed: number, distance?: number, distanceUnits?: DistanceUnits): void {
         stopDrive = true;
-        speed = restictSpeed(speed);
+        speed = restrictSpeed(speed);
         let distCorrection = (100 + distanceCorrection) / 100;
         let targetDegrees = 0;
         let modifier = 1;
@@ -245,8 +245,8 @@ namespace EasyCbp
     //% weight=81
     export function driveCurve(speedL: number, speedR: number, seconds?: number): void {
         stopDrive = true;
-        speedL = restictSpeed(speedL);
-        speedR = restictSpeed(speedR);
+        speedL = restrictSpeed(speedL);
+        speedR = restrictSpeed(speedR);
         CutebotPro.pwmCruiseControl(speedL, speedR);
 
         if (seconds != null) {
@@ -326,7 +326,7 @@ namespace EasyCbp
         }
         else
         {
-            speed = restictSpeed(speed);
+            speed = restrictSpeed(speed);
         }
 
         let speedL = speed;
@@ -379,11 +379,14 @@ namespace EasyCbp
 
             if (change > angle) break;
 
-            /*datalogger.log(
+            datalogger.log(
+                datalogger.createCV("angle", angle),
+                datalogger.createCV("reciprocal", reciprocal),
+                datalogger.createCV("startHeading", startHeading),
                 datalogger.createCV("heading", heading),
                 datalogger.createCV("change", change)
             )
-            */
+            
 
             basic.pause(10);
         }
