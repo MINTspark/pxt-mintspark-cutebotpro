@@ -320,7 +320,7 @@ namespace EasyCbp
     //% block="gyro turn %turn for angle %angle\\% || with speed %speed"
     //% expandableArgumentMode="toggle"
     //% inlineInputMode=inline
-    //% speedL.min=25 speedL.max=50 speedL.defl=25 angle.min=1 angle.max=200 angle.defl=90
+    //% speedL.min=25 speedL.max=50 speedL.defl=25 angle.min=1 angle.defl=90
     //% weight=90
     export function turnGyro(turn: TurnDirection, angle: number, speed?: number): void {
         stopDrive = true;
@@ -357,14 +357,15 @@ namespace EasyCbp
         // PID Control
         let startTime = input.runningTime();
         let startHeading = MINTsparkMpu6050.UpdateMPU6050().orientation.yaw;
-        let change = 0;
+        let previousHeading = startHeading;
+        let totalChange = 0;
 
         CutebotPro.pwmCruiseControl(speedL, speedR);
         basic.pause(200);
 
         while (input.runningTime() - startTime < 5000) {
             let heading = MINTsparkMpu6050.UpdateMPU6050().orientation.yaw;
-            change = startHeading - heading;
+            let change = previousHeading - heading;
 
             if (turn == TurnDirection.Right) {
                 change *= -1;
@@ -375,7 +376,9 @@ namespace EasyCbp
                 change += 360;
             }
 
-            if (change > angle) break;
+            totalChange += change;
+
+            if (totalChange > angle) break;
 
             datalogger.log(
                 datalogger.createCV("angle", angle),
@@ -384,6 +387,7 @@ namespace EasyCbp
                 datalogger.createCV("change", change)
             )
             
+            previousHeading = heading;
             basic.pause(10);
         }
 
