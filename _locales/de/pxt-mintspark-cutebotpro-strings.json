@@ -17,7 +17,7 @@
     "EasyCbp.setSteeringCorrection|block": "Lenkkorrektur auf %correction \\% setzen (positive -> mehr rechts)",
     "EasyCbp.turn|block": "drehe %turn um %angle Grad",
     "EasyCbp.turnGyro|block": "drehe mit Sensor %turn um %angle Grad || mit Speed %speed",
-    "EasyCbp.driveCurve|block": "fahre linker Motor Speed %speedL and rechter Motor Speed %speedR || für %seconds Sekunden",
+    "EasyCbp.driveCurve|block": "fahre %direction linker Motor %speedL\\%  and rechter Motor %speedR\\%  || für %seconds Sekunden",
     "EasyCbp.openClaw|block": "Greifer öffnen",
     "EasyCbp.closeClaw|block": "Greifer schließen",
     "EasyCbp.colorLight|block": "setze %light Farbe auf $color",

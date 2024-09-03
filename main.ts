@@ -239,20 +239,21 @@ namespace EasyCbp
     }
 
     //% group="Drive"
-    //% block="drive %direction left motor speed %speedL and right motor speed %speedR || for %seconds seconds"
-    //% inlineInputMode=inline
+    //% block="drive %direction left motor speed %speedL\\%  right motor speed %speedR\\% || for %seconds seconds"
     //% speedL.min=25 speedL.max=50 speedL.defl=30 speedR.min=25 speedR.max=50 speedR.defl=30
+    //% inlineInputMode=inline
     //% weight=81
     export function driveCurve(direction: DriveDirection, speedL: number, speedR: number, seconds?: number): void {
         stopDrive = true;
         speedL = restrictSpeed(speedL);
         speedR = restrictSpeed(speedR);
-        CutebotPro.pwmCruiseControl(speedL, speedR);
-
+        
         if (direction == DriveDirection.Backward) {
             speedL = speedL * -1;
             speedR = speedR * -1;
         }
+
+        CutebotPro.pwmCruiseControl(speedL, speedR);
 
         if (seconds != null) {
             basic.pause(seconds * 1000);
@@ -380,12 +381,13 @@ namespace EasyCbp
 
             if (totalChange > angle) break;
 
-            datalogger.log(
+            /*datalogger.log(
                 datalogger.createCV("angle", angle),
                 datalogger.createCV("startHeading", startHeading),
                 datalogger.createCV("heading", heading),
                 datalogger.createCV("change", change)
             )
+            */
             
             previousHeading = heading;
             basic.pause(10);
