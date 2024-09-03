@@ -364,35 +364,26 @@ namespace EasyCbp
 
         while (input.runningTime() - startTime < 5000) {
             let heading = MINTsparkMpu6050.UpdateMPU6050().orientation.yaw;
-            let reciprocal = heading + 180;
-            if (reciprocal >= 360) reciprocal -= 360;
+            change = startHeading - heading;
 
             if (turn == TurnDirection.Right) {
-                if (heading < startHeading && heading < reciprocal) {
-                    heading += 360;
-                }
-
-                change = heading - startHeading;
+                change *= -1;
             }
-            else {
-                if (heading > startHeading && heading > reciprocal) {
-                    heading -= 360;
-                }
 
-                change = startHeading - heading;
+            if (change < 0)
+            {
+                change += 360;
             }
 
             if (change > angle) break;
 
             datalogger.log(
                 datalogger.createCV("angle", angle),
-                datalogger.createCV("reciprocal", reciprocal),
                 datalogger.createCV("startHeading", startHeading),
                 datalogger.createCV("heading", heading),
                 datalogger.createCV("change", change)
             )
             
-
             basic.pause(10);
         }
 
