@@ -239,15 +239,20 @@ namespace EasyCbp
     }
 
     //% group="Drive"
-    //% block="drive left motor speed %speedL and right motor speed %speedR || for %seconds seconds"
+    //% block="drive %direction left motor speed %speedL and right motor speed %speedR || for %seconds seconds"
     //% inlineInputMode=inline
     //% speedL.min=25 speedL.max=50 speedL.defl=30 speedR.min=25 speedR.max=50 speedR.defl=30
     //% weight=81
-    export function driveCurve(speedL: number, speedR: number, seconds?: number): void {
+    export function driveCurve(direction: DriveDirection, speedL: number, speedR: number, seconds?: number): void {
         stopDrive = true;
         speedL = restrictSpeed(speedL);
         speedR = restrictSpeed(speedR);
         CutebotPro.pwmCruiseControl(speedL, speedR);
+
+        if (direction == DriveDirection.Backward) {
+            speedL = speedL * -1;
+            speedR = speedR * -1;
+        }
 
         if (seconds != null) {
             basic.pause(seconds * 1000);
