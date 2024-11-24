@@ -11,7 +11,6 @@
         "pxt-mintspark-mpu6050": "github:MINTspark/pxt-mintspark-mpu6050#v1.1.2"
     },
     "files": [
-        "main.blocks",
         "main.ts",
         "README.md",
         "_locales/de/pxt-mintspark-cutebotpro-strings.json"
